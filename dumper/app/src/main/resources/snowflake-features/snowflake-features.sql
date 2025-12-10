@@ -19,6 +19,7 @@ DECLARE
   show_dbt_projects_query_id VARCHAR;
   show_warehouses_query_id VARCHAR;
   show_tasks_query_id VARCHAR;
+  show_streamlits_query_id VARCHAR;
   final_result RESULTSET;
 BEGIN
   -- ACCOUNT_USAGE
@@ -220,6 +221,13 @@ BEGIN
 
   show_tasks_query_id := LAST_QUERY_ID();
 
+  SHOW STREAMLITS IN ACCOUNT;
+
+  SELECT 'development', 'streamlit', COUNT(*), 'STREAMLITS'
+  FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+  show_streamlits_query_id := LAST_QUERY_ID();
+
   final_result := (
     SELECT * FROM TABLE(RESULT_SCAN(:account_usage_query_id))
     UNION ALL
@@ -230,6 +238,8 @@ BEGIN
     SELECT * FROM TABLE(RESULT_SCAN(:show_warehouses_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_tasks_query_id))
+    UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:show_streamlits_query_id))
   );
 
   RETURN TABLE(final_result);
