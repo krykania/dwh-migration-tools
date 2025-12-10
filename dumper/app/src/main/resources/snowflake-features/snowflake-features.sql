@@ -31,6 +31,11 @@ BEGIN
     FROM SNOWFLAKE.ACCOUNT_USAGE.TABLES t
     WHERE t.DELETED IS NULL
   ),
+  columns AS (
+    SELECT DATA_TYPE, DATETIME_PRECISION
+    FROM SNOWFLAKE.ACCOUNT_USAGE.COLUMNS
+    WHERE DELETED IS NULL
+  ),
   procedures AS (
     SELECT PACKAGES, PROCEDURE_LANGUAGE
     FROM SNOWFLAKE.ACCOUNT_USAGE.PROCEDURES
@@ -199,7 +204,47 @@ BEGIN
   -- function - SQL
   SELECT 'sql', 'functions_sql', COUNT(*), ''
   FROM functions
-  WHERE FUNCTION_LANGUAGE = 'SQL';
+  WHERE FUNCTION_LANGUAGE = 'SQL'
+  UNION ALL
+  -- data types - variant
+  SELECT 'data_types', 'variant', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE = 'VARIANT'
+  UNION ALL
+  -- data types - object
+  SELECT 'data_types', 'object', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE = 'OBJECT'
+  UNION ALL
+  -- data types - vector
+  SELECT 'data_types', 'vector', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE = 'VECTOR'
+  UNION ALL
+  -- data types - geometry
+  SELECT 'data_types', 'geometry', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE = 'GEOMETRY'
+  UNION ALL
+  -- data types - timestamp_ltz
+  SELECT 'data_types', 'timestamp_ltz', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE = 'TIMESTAMP_LTZ'
+  UNION ALL
+  -- data types - timestamp_ntz
+  SELECT 'data_types', 'timestamp_ntz', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE = 'TIMESTAMP_NTZ'
+  UNION ALL
+  -- data types - timestamp_tz
+  SELECT 'data_types', 'timestamp_tz', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE = 'TIMESTAMP_TZ'
+  UNION ALL
+  -- data types - timestamp with nanoseconds
+  SELECT 'data_types', 'timestamp_nano', COUNT(*), ''
+  FROM columns
+  WHERE DATA_TYPE LIKE 'TIMESTAMP%' AND DATETIME_PRECISION > 6;
 
   account_usage_query_id := LAST_QUERY_ID();
 
