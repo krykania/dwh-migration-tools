@@ -49,4 +49,21 @@ WITH clustering_classified AS (
   UNION ALL
   -- clustering by expressions
   SELECT'storage_table_layout', 'clustering_by_expressions', COUNT(*), ''
-  FROM clustering_classified WHERE key_type='BY_EXPRESSION';
+  FROM clustering_classified WHERE key_type='BY_EXPRESSION'
+
+  UNION ALL
+  -- cursors in procedures
+  SELECT 'sql',
+    'cursors_in_procedures',
+    COUNT_IF(
+      REGEXP_LIKE(
+        procedure_definition,
+        $$.*(CURSOR[[:space:]]+FOR|DECLARE[[:space:]]+[[:alnum:]_]+[[:space:]]+CURSOR|OPEN[[:space:]]+[[:alnum:]_]+|FETCH[[:space:]]+[[:alnum:]_]+|CLOSE[[:space:]]+[[:alnum:]_]+).*$$,
+        'is'
+      )
+    ),
+    ''
+  FROM snowflake.account_usage.procedures
+  WHERE deleted IS NULL
+    AND procedure_definition IS NOT NULL
+    AND procedure_definition <> '';
