@@ -12,7 +12,7 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
- WITH
+WITH
   tables AS (
     SELECT IS_ICEBERG, IS_DYNAMIC, IS_HYBRID, AUTO_CLUSTERING_ON, RETENTION_TIME
     FROM SNOWFLAKE.ACCOUNT_USAGE.TABLES
@@ -32,6 +32,15 @@
     SELECT PACKAGES, FUNCTION_LANGUAGE
     FROM SNOWFLAKE.ACCOUNT_USAGE.FUNCTIONS
     WHERE DELETED IS NULL
+  ),
+  languages AS (
+    SELECT column1 AS language
+    FROM VALUES ('JAVA'), ('JAVASCRIPT'), ('SQL'), ('PYTHON')
+  ),
+  data_types AS (
+    SELECT column1 AS data_type
+    FROM VALUES ('VARIANT'), ('OBJECT'), ('VECTOR'), ('GEOMETRY'),
+      ('TIMESTAMP_LTZ'), ('TIMESTAMP_NTZ'), ('TIMESTAMP_TZ')
   )
   -- iceberg tables
   SELECT 'storage_table_layout', 'iceberg_columns', COUNT(*), ''
@@ -118,94 +127,25 @@
   WHERE DELETED IS NULL
 
   UNION ALL
-  -- SP - Javascript
-  SELECT 'sql', 'stored_procedures_javascript', COUNT(*), ''
-  FROM procedures
-  WHERE PROCEDURE_LANGUAGE = 'JAVASCRIPT'
+  -- SP - Python, Java, Javascript, SQL
+  SELECT 'sql', 'stored_procedures_' || LOWER(languages.language), COALESCE(COUNT(procedures.PROCEDURE_LANGUAGE), 0), ''
+  FROM languages
+  LEFT JOIN procedures ON UPPER(procedures.procedure_language) = languages.language
+  GROUP BY languages.language
 
   UNION ALL
-  -- SP - Python
-  SELECT 'sql', 'stored_procedures_python', COUNT(*), ''
-  FROM procedures
-  WHERE PROCEDURE_LANGUAGE = 'PYTHON'
+  -- Functions - Python, Java, Javascript, SQL
+  SELECT 'sql', 'functions_' || LOWER(languages.language), COALESCE(COUNT(functions.FUNCTION_LANGUAGE), 0), ''
+  FROM languages
+  LEFT JOIN functions ON UPPER(functions.function_language) = languages.language
+  GROUP BY languages.language
 
   UNION ALL
-  -- SP - Java
-  SELECT 'sql', 'stored_procedures_java', COUNT(*), ''
-  FROM procedures
-  WHERE PROCEDURE_LANGUAGE = 'JAVA'
-
-  UNION ALL
-  -- SP - SQL
-  SELECT 'sql', 'stored_procedures_sql', COUNT(*), ''
-  FROM procedures
-  WHERE PROCEDURE_LANGUAGE = 'SQL'
-
-  UNION ALL
-  -- function - Javascript
-  SELECT 'sql', 'functions_javascript', COUNT(*), ''
-  FROM functions
-  WHERE FUNCTION_LANGUAGE = 'JAVASCRIPT'
-
-  UNION ALL
-  -- function - Python
-  SELECT 'sql', 'functions_python', COUNT(*), ''
-  FROM functions
-  WHERE FUNCTION_LANGUAGE = 'PYTHON'
-
-  UNION ALL
-  -- function - Java
-  SELECT 'sql', 'functions_java', COUNT(*), ''
-  FROM functions
-  WHERE FUNCTION_LANGUAGE = 'JAVA'
-
-  UNION ALL
-  -- function - SQL
-  SELECT 'sql', 'functions_sql', COUNT(*), ''
-  FROM functions
-  WHERE FUNCTION_LANGUAGE = 'SQL'
-
-  UNION ALL
-  -- data types - variant
-  SELECT 'data_types', 'variant', COUNT(*), ''
-  FROM columns
-  WHERE DATA_TYPE = 'VARIANT'
-
-  UNION ALL
-  -- data types - object
-  SELECT 'data_types', 'object', COUNT(*), ''
-  FROM columns
-  WHERE DATA_TYPE = 'OBJECT'
-
-  UNION ALL
-  -- data types - vector
-  SELECT 'data_types', 'vector', COUNT(*), ''
-  FROM columns
-  WHERE DATA_TYPE = 'VECTOR'
-
-  UNION ALL
-  -- data types - geometry
-  SELECT 'data_types', 'geometry', COUNT(*), ''
-  FROM columns
-  WHERE DATA_TYPE = 'GEOMETRY'
-
-  UNION ALL
-  -- data types - timestamp_ltz
-  SELECT 'data_types', 'timestamp_ltz', COUNT(*), ''
-  FROM columns
-  WHERE DATA_TYPE = 'TIMESTAMP_LTZ'
-
-  UNION ALL
-  -- data types - timestamp_ntz
-  SELECT 'data_types', 'timestamp_ntz', COUNT(*), ''
-  FROM columns
-  WHERE DATA_TYPE = 'TIMESTAMP_NTZ'
-
-  UNION ALL
-  -- data types - timestamp_tz
-  SELECT 'data_types', 'timestamp_tz', COUNT(*), ''
-  FROM columns
-  WHERE DATA_TYPE = 'TIMESTAMP_TZ'
+  -- data types - variant, object, vector, geometry, timestamp_ltz, timestamp_ntz, timestamp_tz
+  SELECT 'data_types', LOWER(data_types.data_type), COALESCE(COUNT(columns.data_type), 0), ''
+  FROM data_types
+  LEFT JOIN columns  ON UPPER(columns.data_type) = data_types.data_type
+  GROUP BY data_types.data_type
 
   UNION ALL
   -- data types - timestamp with nanoseconds
