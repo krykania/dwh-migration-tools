@@ -151,4 +151,11 @@ WITH
   -- data types - timestamp with nanoseconds
   SELECT 'data_types', 'timestamp_nano', COUNT(*), ''
   FROM columns
-  WHERE DATA_TYPE LIKE 'TIMESTAMP%' AND DATETIME_PRECISION > 6;
+  WHERE DATA_TYPE LIKE 'TIMESTAMP%' AND DATETIME_PRECISION > 6
+
+  UNION ALL
+  -- COPY INTO - count executions in the last 30 days
+  SELECT 'etl', 'copy_into_last_30_days', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
+  WHERE START_TIME >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+    AND QUERY_TEXT ILIKE 'COPY INTO %';
