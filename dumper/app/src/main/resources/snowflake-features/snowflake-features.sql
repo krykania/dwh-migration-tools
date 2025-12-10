@@ -20,6 +20,8 @@ DECLARE
   show_warehouses_query_id VARCHAR;
   show_tasks_query_id VARCHAR;
   show_streamlits_query_id VARCHAR;
+  show_apps_installed_query_id VARCHAR;
+  show_app_packages_query_id VARCHAR;
   final_result RESULTSET;
 BEGIN
   -- ACCOUNT_USAGE
@@ -223,10 +225,25 @@ BEGIN
 
   SHOW STREAMLITS IN ACCOUNT;
 
-  SELECT 'development', 'streamlit', COUNT(*), 'STREAMLITS'
+  SELECT 'app', 'streamlit', COUNT(*), 'STREAMLITS'
   FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
 
   show_streamlits_query_id := LAST_QUERY_ID();
+
+  SHOW APPLICATIONS IN ACCOUNT;
+
+  SELECT 'app', 'native_apps_installed', COUNT(*), ''
+  FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+  show_apps_installed_query_id := LAST_QUERY_ID();
+
+  SHOW APPLICATION PACKAGES IN ACCOUNT;
+
+  SELECT
+    'app', 'native_app_packages', COUNT(*), ''
+  FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+  show_app_packages_query_id := LAST_QUERY_ID();
 
   final_result := (
     SELECT * FROM TABLE(RESULT_SCAN(:account_usage_query_id))
@@ -240,6 +257,10 @@ BEGIN
     SELECT * FROM TABLE(RESULT_SCAN(:show_tasks_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_streamlits_query_id))
+    UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:show_apps_installed_query_id))
+    UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:show_app_packages_query_id))
   );
 
   RETURN TABLE(final_result);
