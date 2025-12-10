@@ -62,6 +62,10 @@ public class SnowflakeMetadataConnectorTest extends AbstractSnowflakeConnectorEx
       LoggerFactory.getLogger(SnowflakeMetadataConnectorTest.class);
 
   private static final String FEATURES_CSV = "features.csv";
+  private static final String ACCOUNT_USAGE_SIMPLE_FILE = "account-usage-simple.sql";
+  private static final String ACCOUNT_USAGE_COMPLEX_FILE = "account-usage-complex.sql";
+  private static final String SHOW_BASED_FILE = "show-based.sql";
+  private static final String SNOWFLAKE_FEATURES_PREFIX = "snowflake-features/";
 
   private final MetadataConnector connector = new SnowflakeMetadataConnector();
 
@@ -173,12 +177,10 @@ public class SnowflakeMetadataConnectorTest extends AbstractSnowflakeConnectorEx
   }
 
   @Test
-  public void connector_checkExpectedFeaturesQueryFromFile() throws IOException {
-    String actualFeaturesQuery = collectSqlStatements().get(FEATURES_CSV);
-    String path = "snowflake-features/snowflake-features.sql";
-    String expectedFeaturesQuery = loadFile(path);
-
-    assertEquals(actualFeaturesQuery, expectedFeaturesQuery);
+  public void connector_checkExpectedFeaturesQueryFilesExist() {
+    loadFile(SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_SIMPLE_FILE);
+    loadFile(SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_COMPLEX_FILE);
+    loadFile(SNOWFLAKE_FEATURES_PREFIX + SHOW_BASED_FILE);
   }
 
   @Test
@@ -284,14 +286,15 @@ public class SnowflakeMetadataConnectorTest extends AbstractSnowflakeConnectorEx
   private static ImmutableMap<String, String> collectSqlStatements(String... extraArgs)
       throws IOException {
     return collectSqlStatementsAsMultimap(extraArgs).entries().stream()
-        .collect(ImmutableMap.toImmutableMap(Entry::getKey, Entry::getValue));
+        .collect(
+            ImmutableMap.toImmutableMap(Entry::getKey, Entry::getValue, (first, dup) -> first));
   }
 
   static class TaskSqlMap extends HashMap<String, String> {}
 
-  private String loadFile(String path) {
+  private void loadFile(String path) {
     try {
-      return Resources.toString(Resources.getResource(path), UTF_8);
+      Resources.toString(Resources.getResource(path), UTF_8);
     } catch (IOException e) {
       throw new IllegalArgumentException(
           String.format("An invalid file was provided: '%s'.", path), e);

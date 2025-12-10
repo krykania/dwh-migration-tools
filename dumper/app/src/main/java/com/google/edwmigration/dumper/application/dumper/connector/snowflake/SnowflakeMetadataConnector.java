@@ -63,6 +63,10 @@ public class SnowflakeMetadataConnector extends AbstractSnowflakeConnector
   private static final String ACCOUNT_USAGE_SCHEMA_NAME = "SNOWFLAKE.ACCOUNT_USAGE";
   private static final String ACCOUNT_USAGE_WHERE_CONDITION = "DELETED IS NULL";
   private static final String EMPTY_WHERE_CONDITION = "";
+  private static final String ACCOUNT_USAGE_SIMPLE_FILE = "account-usage-simple.sql";
+  private static final String ACCOUNT_USAGE_COMPLEX_FILE = "account-usage-complex.sql";
+  private static final String SHOW_BASED_FILE = "show-based.sql";
+  private static final String SNOWFLAKE_FEATURES_PREFIX = "snowflake-features/";
 
   private enum PropertyAction {
     QUERY("query", "query"),
@@ -289,14 +293,24 @@ public class SnowflakeMetadataConnector extends AbstractSnowflakeConnector
         isAssessment,
         getInformationSchemaWhereCondition("function_catalog", arguments.getDatabases()));
 
-    String path = "snowflake-features/snowflake-features.sql";
-    out.add(
-        new JdbcSelectTask(
-                FeaturesFormat.IS_ZIP_ENTRY_NAME,
-                loadFile(path),
-                TaskCategory.OPTIONAL, // TODO: Change to REQUIRED after implementation is finished
-                TaskOptions.DEFAULT)
-            .withHeaderClass(FeaturesFormat.Header.class));
+    ImmutableList.of(
+            SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_SIMPLE_FILE,
+            SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_COMPLEX_FILE,
+            SNOWFLAKE_FEATURES_PREFIX + SHOW_BASED_FILE)
+        .forEach(
+            path -> {
+              TaskOptions taskOptions =
+                  path.contains(ACCOUNT_USAGE_SIMPLE_FILE)
+                      ? TaskOptions.DEFAULT
+                      : TaskOptions.DEFAULT.withWriteMode(WriteMode.APPEND_EXISTING);
+              out.add(
+                  new JdbcSelectTask(
+                          FeaturesFormat.IS_ZIP_ENTRY_NAME,
+                          loadFile(path),
+                          TaskCategory.OPTIONAL, // TODO: Change to REQUIRED after implementation
+                          taskOptions)
+                      .withHeaderClass(FeaturesFormat.Header.class));
+            });
 
     if (isAssessment) {
       for (AssessmentQuery item : planner.generateAssessmentQueries()) {
