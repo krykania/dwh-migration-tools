@@ -31,6 +31,16 @@ BEGIN
     FROM SNOWFLAKE.ACCOUNT_USAGE.TABLES t
     WHERE t.DELETED IS NULL
   ),
+  procedures AS (
+    SELECT PACKAGES, PROCEDURE_LANGUAGE
+    FROM SNOWFLAKE.ACCOUNT_USAGE.PROCEDURES
+    WHERE DELETED IS NULL
+  ),
+  functions AS (
+    SELECT PACKAGES, FUNCTION_LANGUAGE
+    FROM SNOWFLAKE.ACCOUNT_USAGE.FUNCTIONS
+    WHERE DELETED IS NULL
+  ),
   clustering_base AS (
     SELECT * FROM base WHERE CLUSTERING_KEY IS NOT NULL
   ),
@@ -125,30 +135,18 @@ BEGIN
    AND UPPER(NAME) NOT IN ('ACCOUNTADMIN','SYSADMIN','SECURITYADMIN','USERADMIN','ORGADMIN','PUBLIC')
   UNION ALL
   -- Snowpark Usage
-  SELECT
-    'service',
-    'snowpark_procedures',
-    COUNT(*),
-    'PROCEDURES'
-  FROM SNOWFLAKE.ACCOUNT_USAGE.PROCEDURES
+  SELECT 'service', 'snowpark_procedures', COUNT(*), 'PROCEDURES'
+  FROM procedures
     WHERE PROCEDURE_LANGUAGE IN ('PYTHON','JAVA','SCALA')
       AND (PACKAGES LIKE '%snowflake-snowpark-python%' OR PACKAGES LIKE '%com.snowflake:snowpark%')
   UNION ALL
-  SELECT
-    'service',
-    'snowpark_functions',
-    COUNT(*),
-    'FUNCTIONS'
-  FROM SNOWFLAKE.ACCOUNT_USAGE.FUNCTIONS
+  SELECT 'service', 'snowpark_functions', COUNT(*), 'FUNCTIONS'
+  FROM functions
     WHERE FUNCTION_LANGUAGE IN ('PYTHON','JAVA','SCALA')
       AND (PACKAGES LIKE '%snowflake-snowpark-python%' OR PACKAGES LIKE '%com.snowflake:snowpark%')
   UNION ALL
   -- Zero copy replication
-  SELECT
-    'service',
-    'zero_copy_replication',
-    COUNT(*),
-    'CLONES'
+  SELECT 'service', 'zero_copy_replication', COUNT(*), 'CLONES'
   FROM snowflake.account_usage.table_storage_metrics t1
   JOIN (
     SELECT CLONE_GROUP_ID, MIN(TABLE_CREATED) AS min_created
@@ -161,7 +159,47 @@ BEGIN
   -- Snowpipe
   SELECT 'etl', 'snowpipe', COUNT(*), ''
   FROM SNOWFLAKE.ACCOUNT_USAGE.PIPES
-  WHERE DELETED IS NULL;
+  WHERE DELETED IS NULL
+  UNION ALL
+  -- SP - Javascript
+  SELECT 'sql', 'stored_procedures_javascript', COUNT(*), ''
+  FROM procedures
+  WHERE PROCEDURE_LANGUAGE = 'JAVASCRIPT'
+  UNION ALL
+  -- SP - Python
+  SELECT 'sql', 'stored_procedures_python', COUNT(*), ''
+  FROM procedures
+  WHERE PROCEDURE_LANGUAGE = 'PYTHON'
+  UNION ALL
+  -- SP - Java
+  SELECT 'sql', 'stored_procedures_java', COUNT(*), ''
+  FROM procedures
+  WHERE PROCEDURE_LANGUAGE = 'JAVA'
+  UNION ALL
+  -- SP - SQL
+  SELECT 'sql', 'stored_procedures_sql', COUNT(*), ''
+  FROM procedures
+  WHERE PROCEDURE_LANGUAGE = 'SQL'
+  UNION ALL
+  -- function - Javascript
+  SELECT 'sql', 'functions_javascript', COUNT(*), ''
+  FROM functions
+  WHERE FUNCTION_LANGUAGE = 'JAVASCRIPT'
+  UNION ALL
+  -- function - Python
+  SELECT 'sql', 'functions_python', COUNT(*), ''
+  FROM functions
+  WHERE FUNCTION_LANGUAGE = 'PYTHON'
+  UNION ALL
+  -- function - Java
+  SELECT 'sql', 'functions_java', COUNT(*), ''
+  FROM functions
+  WHERE FUNCTION_LANGUAGE = 'JAVA'
+  UNION ALL
+  -- function - SQL
+  SELECT 'sql', 'functions_sql', COUNT(*), ''
+  FROM functions
+  WHERE FUNCTION_LANGUAGE = 'SQL';
 
   account_usage_query_id := LAST_QUERY_ID();
 
@@ -239,8 +277,7 @@ BEGIN
 
   SHOW APPLICATION PACKAGES IN ACCOUNT;
 
-  SELECT
-    'app', 'native_app_packages', COUNT(*), ''
+  SELECT 'app', 'native_app_packages', COUNT(*), ''
   FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
 
   show_app_packages_query_id := LAST_QUERY_ID();
