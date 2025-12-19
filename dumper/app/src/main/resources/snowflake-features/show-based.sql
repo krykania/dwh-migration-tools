@@ -20,6 +20,7 @@ DECLARE
   show_streamlits_query_id VARCHAR;
   show_apps_installed_query_id VARCHAR;
   show_app_packages_query_id VARCHAR;
+  show_cortex_query_id VARCHAR;
   final_result RESULTSET;
 BEGIN
   -- contains search optimization info
@@ -107,6 +108,14 @@ BEGIN
 
   show_app_packages_query_id := LAST_QUERY_ID();
 
+  -- Contains cortex AI info
+  SHOW CORTEX SEARCH SERVICES IN ACCOUNT;
+
+  SELECT 'app', 'cortex-ai', COUNT(*), 'SERVICES'
+      FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+  show_cortex_query_id := LAST_QUERY_ID();
+
   final_result := (
     SELECT * FROM TABLE(RESULT_SCAN(:show_tables_query_id))
     UNION ALL
@@ -121,6 +130,8 @@ BEGIN
     SELECT * FROM TABLE(RESULT_SCAN(:show_apps_installed_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_app_packages_query_id))
+    UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:show_cortex_query_id))
   );
 
   RETURN TABLE(final_result);
