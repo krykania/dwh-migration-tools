@@ -190,4 +190,16 @@ WITH
   UNION ALL
   -- Horizon - Sensitive data classification was run
   SELECT 'governance', 'horizon_sensitive_data_classification_tables', COUNT(*), ''
-  FROM SNOWFLAKE.ACCOUNT_USAGE.DATA_CLASSIFICATION_LATEST;
+  FROM SNOWFLAKE.ACCOUNT_USAGE.DATA_CLASSIFICATION_LATEST
+
+  UNION ALL
+  -- Snowpark container services - compute pools
+  SELECT 'service', 'snowpark_container_services_compute_pools', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.COMPUTE_POOLS
+  WHERE DELETED IS NULL
+
+  UNION ALL
+  -- Snowpark container services - services
+  SELECT 'service', 'snowpark_container_services_services', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.SERVICES
+  WHERE DELETED IS NULL;

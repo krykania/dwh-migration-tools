@@ -132,7 +132,7 @@ BEGIN
   SELECT 'app', 'open-catalog', COUNT(*), 'INTEGRATIONS'
   FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
 
-  show_show_integrations_query_id := LAST_QUERY_ID();
+  show_integrations_query_id := LAST_QUERY_ID();
 
   final_result := (
     SELECT * FROM TABLE(RESULT_SCAN(:show_tables_query_id))
@@ -152,8 +152,6 @@ BEGIN
     SELECT * FROM TABLE(RESULT_SCAN(:show_notebooks_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_cortex_query_id))
-    UNION ALL
-    SELECT * FROM TABLE(RESULT_SCAN(:show_show_integrations_query_id))
   );
 
   RETURN TABLE(final_result);
