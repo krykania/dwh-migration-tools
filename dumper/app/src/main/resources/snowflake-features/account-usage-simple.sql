@@ -173,4 +173,21 @@ WITH
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD(day, -30, CURRENT_TIMESTAMP())
     AND QUERY_TEXT ILIKE '%PIVOT%'
-    AND REGEXP_LIKE(QUERY_TEXT, $$.*\bIN\b\s*\(\s*\bANY\b.*$$, 'is');
+    AND REGEXP_LIKE(QUERY_TEXT, $$.*\bIN\b\s*\(\s*\bANY\b.*$$, 'is')
+
+  UNION ALL
+  -- Horizon - Tags exist (catalog metadata is being used)
+  SELECT 'governance', 'horizon_tags_defined', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.TAGS
+  WHERE DELETED IS NULL
+
+  UNION ALL
+  -- Horizon - Tag assignments exist
+  SELECT 'governance', 'horizon_tag_assignments', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES
+  WHERE OBJECT_DELETED IS NULL
+
+  UNION ALL
+  -- Horizon - Sensitive data classification was run
+  SELECT 'governance', 'horizon_sensitive_data_classification_tables', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.DATA_CLASSIFICATION_LATEST;
