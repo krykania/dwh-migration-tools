@@ -23,6 +23,10 @@ DECLARE
   show_notebooks_query_id VARCHAR;
   show_cortex_query_id VARCHAR;
   show_integrations_query_id VARCHAR;
+  show_pools_query_id VARCHAR;
+  spcs_pools_query_id VARCHAR;
+  show_services_query_id VARCHAR;
+  spcs_services_query_id VARCHAR;
   final_result RESULTSET;
 BEGIN
   -- contains search optimization info
@@ -132,7 +136,41 @@ BEGIN
   SELECT 'app', 'open-catalog', COUNT(*), 'INTEGRATIONS'
   FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
 
-  show_show_integrations_query_id := LAST_QUERY_ID();
+  show_integrations_query_id := LAST_QUERY_ID();
+
+  BEGIN
+    SHOW COMPUTE POOLS IN ACCOUNT;
+    show_pools_query_id := LAST_QUERY_ID();
+
+    SELECT 'service', 'snowpark_container_services_compute_pools', COUNT(*), 'POOLS'
+    FROM TABLE(RESULT_SCAN(:show_pools_query_id));
+
+    spcs_pools_query_id := LAST_QUERY_ID();
+
+  EXCEPTION
+    WHEN STATEMENT_ERROR THEN
+      SELECT 'service', 'snowpark_container_services_compute_pools', 0,
+        'NOT_SUPPORTED_OR_NOT_AUTHORIZED';
+
+      spcs_pools_query_id := LAST_QUERY_ID();
+  END;
+
+  BEGIN
+    SHOW SERVICES IN ACCOUNT;
+    show_services_query_id := LAST_QUERY_ID();
+
+    SELECT 'service', 'snowpark_container_services_services', COUNT(*), 'SERVICES'
+    FROM TABLE(RESULT_SCAN(:show_services_query_id));
+
+    spcs_services_query_id := LAST_QUERY_ID();
+
+    EXCEPTION
+      WHEN STATEMENT_ERROR THEN
+      SELECT 'service', 'snowpark_container_services_services', 0,
+       'NOT_SUPPORTED_OR_NOT_AUTHORIZED';
+
+      spcs_services_query_id := LAST_QUERY_ID();
+  END;
 
   final_result := (
     SELECT * FROM TABLE(RESULT_SCAN(:show_tables_query_id))
@@ -153,7 +191,9 @@ BEGIN
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_cortex_query_id))
     UNION ALL
-    SELECT * FROM TABLE(RESULT_SCAN(:show_show_integrations_query_id))
+    SELECT * FROM TABLE(RESULT_SCAN(:spcs_pools_query_id))
+    UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:spcs_services_query_id))
   );
 
   RETURN TABLE(final_result);
