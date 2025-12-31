@@ -206,7 +206,7 @@ WITH
 
   UNION ALL
   -- BI - Tableau heuristics
-  SELECT 'bi', 'tableau_query_tagged_queries', COUNT(*), ''
+  SELECT 'bi', 'tableau_query_tagged_queries_30d', COUNT(*), ''
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
     AND QUERY_TAG IS NOT NULL
@@ -214,4 +214,12 @@ WITH
          QUERY_TAG ILIKE '%tableau%'
          OR QUERY_TAG ILIKE '%workbook%'
          OR QUERY_TAG ILIKE '%sheet%'
-    );
+    )
+
+  UNION ALL
+  -- BI - Sigma heuristics
+  SELECT 'bi', 'sigma_query_tagged_queries_30d', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
+  WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
+    AND QUERY_TAG IS NOT NULL
+    AND QUERY_TAG ILIKE '%sigma%';
