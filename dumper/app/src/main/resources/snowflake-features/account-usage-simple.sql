@@ -202,4 +202,16 @@ WITH
   -- Snowpark container services - services
   SELECT 'service', 'snowpark_container_services_services', COUNT(*), ''
   FROM SNOWFLAKE.ACCOUNT_USAGE.SERVICES
-  WHERE DELETED IS NULL;
+  WHERE DELETED IS NULL
+
+  UNION ALL
+  -- BI - Tableau heuristics
+  SELECT 'bi', 'tableau_query_tagged_queries', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
+  WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
+    AND QUERY_TAG IS NOT NULL
+    AND (
+         QUERY_TAG ILIKE '%tableau%'
+         OR QUERY_TAG ILIKE '%workbook%'
+         OR QUERY_TAG ILIKE '%sheet%'
+    );
