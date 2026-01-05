@@ -25,6 +25,7 @@ DECLARE
   show_integrations_query_id VARCHAR;
   show_forecasts_query_id VARCHAR;
   show_models_query_id VARCHAR;
+  show_data_clean_rooms_query_id VARCHAR;
   final_result RESULTSET;
 BEGIN
   -- contains search optimization info
@@ -152,6 +153,14 @@ BEGIN
 
   show_models_query_id := LAST_QUERY_ID();
 
+  -- Contain info about Data Clean Rooms
+  SHOW APPLICATIONS LIKE '%CLEAN_ROOM%' IN ACCOUNT;
+
+  SELECT 'app', 'data-clean-rooms', COUNT(*), 'APPLICATIONS'
+    FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+  show_data_clean_rooms_query_id := LAST_QUERY_ID();
+
   final_result := (
     SELECT * FROM TABLE(RESULT_SCAN(:show_tables_query_id))
     UNION ALL
@@ -174,6 +183,8 @@ BEGIN
     SELECT * FROM TABLE(RESULT_SCAN(:show_forecasts_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_models_query_id))
+    UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:show_data_clean_rooms_query_id))
   );
 
   RETURN TABLE(final_result);
