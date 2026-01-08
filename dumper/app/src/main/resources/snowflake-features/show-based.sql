@@ -26,6 +26,7 @@ DECLARE
   show_forecasts_query_id VARCHAR;
   show_models_query_id VARCHAR;
   show_data_clean_rooms_query_id VARCHAR;
+  show_openflow_query_id VARCHAR;
   final_result RESULTSET;
 BEGIN
   -- contains search optimization info
@@ -161,6 +162,13 @@ BEGIN
 
   show_data_clean_rooms_query_id := LAST_QUERY_ID();
 
+  SHOW OPENFLOW DATA PLANE INTEGRATIONS;
+
+  SELECT 'data_integration', 'openflow_data_plane', COUNT(*), 'INTEGRATIONS'
+  FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+  show_openflow_query_id := LAST_QUERY_ID();
+
   final_result := (
     SELECT * FROM TABLE(RESULT_SCAN(:show_tables_query_id))
     UNION ALL
@@ -180,13 +188,15 @@ BEGIN
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_cortex_query_id))
     UNION ALL
-    SELECT * FROM TABLE(RESULT_SCAN(:show_integrations_query_id))
+    SELECT * FROM TABLE(RESULT_SCAN(:show_integrations_query_id)) -- RESTORED (Missing in original)
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_forecasts_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_models_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_data_clean_rooms_query_id))
+    UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:show_openflow_query_id)) -- NEW UNION
   );
 
   RETURN TABLE(final_result);
