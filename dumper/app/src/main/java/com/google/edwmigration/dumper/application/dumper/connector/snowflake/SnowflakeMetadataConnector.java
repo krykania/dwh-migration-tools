@@ -176,8 +176,7 @@ public class SnowflakeMetadataConnector extends AbstractSnowflakeConnector
 
   @Override
   public final void addTasksTo(
-      @Nonnull List<? super Task<?>> out, @Nonnull ConnectorArguments arguments)
-      throws IOException {
+      @Nonnull List<? super Task<?>> out, @Nonnull ConnectorArguments arguments) {
     out.add(new DumpMetadataTask(arguments, FORMAT_NAME));
     out.add(new FormatTask(FORMAT_NAME));
     out.add(SnowflakeYamlSummaryTask.create(FORMAT_NAME, arguments));

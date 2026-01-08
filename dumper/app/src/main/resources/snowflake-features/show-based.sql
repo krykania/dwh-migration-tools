@@ -180,6 +180,8 @@ BEGIN
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_cortex_query_id))
     UNION ALL
+    SELECT * FROM TABLE(RESULT_SCAN(:show_integrations_query_id))
+    UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_forecasts_query_id))
     UNION ALL
     SELECT * FROM TABLE(RESULT_SCAN(:show_models_query_id))

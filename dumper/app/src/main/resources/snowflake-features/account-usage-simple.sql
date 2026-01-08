@@ -67,9 +67,9 @@ WITH
   FROM tables WHERE RETENTION_TIME >= 7 AND RETENTION_TIME <= 14
 
   UNION ALL
-  -- time travel, retention period >= 14
+  -- time travel, retention period > 14
   SELECT'services', 'time_travel_gt_14d', COUNT(*), ''
-  FROM tables WHERE RETENTION_TIME >= 7 AND RETENTION_TIME >= 14
+  FROM tables WHERE RETENTION_TIME > 14
 
   UNION ALL
   -- parquet file format
