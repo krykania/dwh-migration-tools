@@ -135,7 +135,8 @@ BEGIN
   SHOW CATALOG INTEGRATIONS;
 
   SELECT 'app', 'open-catalog', COUNT(*), 'INTEGRATIONS'
-  FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+  FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()))
+  WHERE "type" = 'CATALOG';
 
   show_integrations_query_id := LAST_QUERY_ID();
 
