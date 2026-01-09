@@ -52,8 +52,8 @@ WITH
   FROM tables WHERE IS_DYNAMIC = 'YES'
 
   UNION ALL
-  -- hybrid tables
-  SELECT 'storage_table_layout', 'hybrid_table_columns', COUNT(*), ''
+  -- hybrid tables, the existence of hybrid tables is also a strong signal for using Unistore.
+  SELECT 'storage_table_layout', 'unistore_hybrid_table_columns', COUNT(*), ''
   FROM tables WHERE IS_HYBRID = 'YES'
 
   UNION ALL
