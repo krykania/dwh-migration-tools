@@ -52,8 +52,8 @@ WITH
   FROM tables WHERE IS_DYNAMIC = 'YES'
 
   UNION ALL
-  -- hybrid tables
-  SELECT 'storage_table_layout', 'hybrid_table_columns', COUNT(*), ''
+  -- hybrid tables, the existence of hybrid tables is also a strong signal for using Unistore.
+  SELECT 'storage_table_layout', 'unistore_hybrid_table_columns', COUNT(*), ''
   FROM tables WHERE IS_HYBRID = 'YES'
 
   UNION ALL
@@ -67,9 +67,9 @@ WITH
   FROM tables WHERE RETENTION_TIME >= 7 AND RETENTION_TIME <= 14
 
   UNION ALL
-  -- time travel, retention period >= 14
+  -- time travel, retention period > 14
   SELECT'services', 'time_travel_gt_14d', COUNT(*), ''
-  FROM tables WHERE RETENTION_TIME >= 7 AND RETENTION_TIME >= 14
+  FROM tables WHERE RETENTION_TIME > 14
 
   UNION ALL
   -- parquet file format
@@ -222,4 +222,22 @@ WITH
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
     AND QUERY_TAG IS NOT NULL
-    AND QUERY_TAG ILIKE '%sigma%';
+    AND QUERY_TAG ILIKE '%sigma%'
+
+  UNION ALL
+  -- ELT - Fivetran
+  SELECT 'elt', 'fivetran_like_metadata_columns', COUNT(*), ''
+  FROM SNOWFLAKE.ACCOUNT_USAGE.COLUMNS
+  WHERE DELETED IS NULL
+    AND REGEXP_LIKE(UPPER(COLUMN_NAME), '.*_FIVETRAN_(ID|SYNCED|DELETED).*')
+
+  UNION ALL
+  SELECT 'ai_ml', 'snowflake_arctic_llm', COUNT(*), 'QUERIES'
+  FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
+  WHERE START_TIME >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+    AND (
+         QUERY_TEXT ILIKE '%snowflake-arctic%'
+         OR QUERY_TEXT ILIKE '%SNOWFLAKE.CORTEX.COMPLETE%'
+         OR QUERY_TEXT ILIKE '%SNOWFLAKE.CORTEX.SUMMARIZE%'
+         OR QUERY_TEXT ILIKE '%SNOWFLAKE.CORTEX.TRANSLATE%'
+    );
