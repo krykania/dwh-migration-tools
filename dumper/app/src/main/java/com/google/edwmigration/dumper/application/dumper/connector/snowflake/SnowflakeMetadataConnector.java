@@ -19,6 +19,7 @@ package com.google.edwmigration.dumper.application.dumper.connector.snowflake;
 import static com.google.edwmigration.dumper.application.dumper.connector.snowflake.MetadataView.TABLE_STORAGE_METRICS;
 import static com.google.edwmigration.dumper.application.dumper.connector.snowflake.SnowflakeInput.USAGE_THEN_SCHEMA_SOURCE;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.stream;
 
 import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
@@ -292,20 +293,17 @@ public class SnowflakeMetadataConnector extends AbstractSnowflakeConnector
         isAssessment,
         getInformationSchemaWhereCondition("function_catalog", arguments.getDatabases()));
 
-    ImmutableList.of(
-            SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_SIMPLE_FILE,
-            SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_COMPLEX_FILE,
-            SNOWFLAKE_FEATURES_PREFIX + SHOW_BASED_FILE)
+    stream(FeaturesQueryPath.values())
         .forEach(
             path -> {
               TaskOptions taskOptions =
-                  path.contains(ACCOUNT_USAGE_SIMPLE_FILE)
+                  path.value.contains(ACCOUNT_USAGE_SIMPLE_FILE)
                       ? TaskOptions.DEFAULT
                       : TaskOptions.DEFAULT.withWriteMode(WriteMode.APPEND_EXISTING);
               out.add(
                   new JdbcSelectTask(
                           FeaturesFormat.IS_ZIP_ENTRY_NAME,
-                          loadFile(path),
+                          loadFile(path.value),
                           TaskCategory.OPTIONAL, // TODO: Change to REQUIRED after implementation
                           taskOptions)
                       .withHeaderClass(FeaturesFormat.Header.class));
@@ -342,6 +340,18 @@ public class SnowflakeMetadataConnector extends AbstractSnowflakeConnector
       out.add(task);
       // Next tasks will append to the same file.
       taskOptions = taskOptions.withWriteMode(WriteMode.APPEND_EXISTING);
+    }
+  }
+
+  enum FeaturesQueryPath {
+    SIMPLE(SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_SIMPLE_FILE),
+    COMPLEX(SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_COMPLEX_FILE),
+    SHOW_BASED(SNOWFLAKE_FEATURES_PREFIX + SHOW_BASED_FILE);
+
+    final String value;
+
+    FeaturesQueryPath(String value) {
+      this.value = value;
     }
   }
 
