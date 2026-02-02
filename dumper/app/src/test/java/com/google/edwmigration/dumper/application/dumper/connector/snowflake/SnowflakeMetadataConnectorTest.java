@@ -29,6 +29,7 @@ import com.google.common.io.Resources;
 import com.google.edwmigration.dumper.application.dumper.ConnectorArguments;
 import com.google.edwmigration.dumper.application.dumper.MetadataDumperUsageException;
 import com.google.edwmigration.dumper.application.dumper.connector.MetadataConnector;
+import com.google.edwmigration.dumper.application.dumper.connector.snowflake.SnowflakeMetadataConnector.FeaturesQueryPath;
 import com.google.edwmigration.dumper.application.dumper.task.JdbcSelectTask;
 import com.google.edwmigration.dumper.application.dumper.task.Task;
 import com.google.edwmigration.dumper.plugin.lib.dumper.spi.CoreMetadataDumpFormat;
@@ -48,13 +49,14 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assume;
 import org.junit.Test;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author shevek */
-@RunWith(JUnit4.class)
+@RunWith(Theories.class)
 public class SnowflakeMetadataConnectorTest extends AbstractSnowflakeConnectorExecutionTest {
 
   @SuppressWarnings("UnusedVariable")
@@ -62,10 +64,6 @@ public class SnowflakeMetadataConnectorTest extends AbstractSnowflakeConnectorEx
       LoggerFactory.getLogger(SnowflakeMetadataConnectorTest.class);
 
   private static final String FEATURES_CSV = "features.csv";
-  private static final String ACCOUNT_USAGE_SIMPLE_FILE = "account-usage-simple.sql";
-  private static final String ACCOUNT_USAGE_COMPLEX_FILE = "account-usage-complex.sql";
-  private static final String SHOW_BASED_FILE = "show-based.sql";
-  private static final String SNOWFLAKE_FEATURES_PREFIX = "snowflake-features/";
 
   private final MetadataConnector connector = new SnowflakeMetadataConnector();
 
@@ -176,11 +174,9 @@ public class SnowflakeMetadataConnectorTest extends AbstractSnowflakeConnectorEx
     }
   }
 
-  @Test
-  public void connector_checkExpectedFeaturesQueryFilesExist() {
-    loadFile(SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_SIMPLE_FILE);
-    loadFile(SNOWFLAKE_FEATURES_PREFIX + ACCOUNT_USAGE_COMPLEX_FILE);
-    loadFile(SNOWFLAKE_FEATURES_PREFIX + SHOW_BASED_FILE);
+  @Theory
+  public void featuresQueryPathValue_refersToExistingPath(FeaturesQueryPath path) {
+    loadFile(path.value);
   }
 
   @Test
