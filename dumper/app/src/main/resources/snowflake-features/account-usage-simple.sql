@@ -43,55 +43,55 @@ WITH
       ('TIMESTAMP_LTZ'), ('TIMESTAMP_NTZ'), ('TIMESTAMP_TZ')
   )
   -- iceberg tables
-  SELECT 'storage_table_layout', 'iceberg_columns', COUNT(*), ''
+  SELECT 'storage_table_layout', 'iceberg_columns', COUNT(*), 'TABLES'
   FROM tables WHERE IS_ICEBERG = 'YES'
 
   UNION ALL
   -- dynamic tables
-  SELECT 'storage_table_layout', 'dynamic_table_columns', COUNT(*), ''
+  SELECT 'storage_table_layout', 'dynamic_table_columns', COUNT(*), 'TABLES'
   FROM tables WHERE IS_DYNAMIC = 'YES'
 
   UNION ALL
   -- hybrid tables, the existence of hybrid tables is also a strong signal for using Unistore.
-  SELECT 'storage_table_layout', 'unistore_hybrid_table_columns', COUNT(*), ''
+  SELECT 'storage_table_layout', 'unistore_hybrid_table_columns', COUNT(*), 'TABLES'
   FROM tables WHERE IS_HYBRID = 'YES'
 
   UNION ALL
   -- automatic clustering tables
-  SELECT 'services', 'automatic_clustering', COUNT(*), ''
+  SELECT 'services', 'automatic_clustering', COUNT(*), 'TABLES'
   FROM tables WHERE AUTO_CLUSTERING_ON = 'YES'
 
   UNION ALL
   -- time travel, retention period >= 7 and <= 14
-  SELECT'services', 'time_travel_between_7d_14d', COUNT(*), ''
+  SELECT 'services', 'time_travel_between_7d_14d', COUNT(*), 'TABLES'
   FROM tables WHERE RETENTION_TIME >= 7 AND RETENTION_TIME <= 14
 
   UNION ALL
   -- time travel, retention period > 14
-  SELECT'services', 'time_travel_gt_14d', COUNT(*), ''
+  SELECT 'services', 'time_travel_gt_14d', COUNT(*), 'TABLES'
   FROM tables WHERE RETENTION_TIME > 14
 
   UNION ALL
   -- parquet file format
-  SELECT 'storage', 'parquet_format', COUNT(*), ''
+  SELECT 'storage', 'parquet_format', COUNT(*), 'FORMATS'
   FROM SNOWFLAKE.ACCOUNT_USAGE.FILE_FORMATS
   WHERE DELETED IS NULL AND UPPER(FILE_FORMAT_TYPE) = 'PARQUET'
 
   UNION ALL
   -- masking policies
-  SELECT 'security', 'masking_policies', COUNT(*), ''
+  SELECT 'security', 'masking_policies', COUNT(*), 'REFERENCES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.POLICY_REFERENCES
   WHERE POLICY_KIND = 'MASKING_POLICY'
 
   UNION ALL
   -- secure views
-  SELECT 'security', 'secure_views', COUNT(*), ''
+  SELECT 'security', 'secure_views', COUNT(*), 'VIEWS'
   FROM SNOWFLAKE.ACCOUNT_USAGE.VIEWS
   WHERE DELETED IS NULL AND IS_SECURE = 'YES'
 
   UNION ALL
   -- custom roles
-  SELECT 'security', 'custom_roles', COUNT(*), ''
+  SELECT 'security', 'custom_roles', COUNT(*), 'ROLES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.ROLES
   WHERE DELETED_ON IS NULL
    AND UPPER(NAME) NOT IN ('ACCOUNTADMIN','SYSADMIN','SECURITYADMIN','USERADMIN','ORGADMIN','PUBLIC')
@@ -122,54 +122,54 @@ WITH
 
   UNION ALL
   -- Snowpipe
-  SELECT 'etl', 'snowpipe', COUNT(*), ''
+  SELECT 'etl', 'snowpipe', COUNT(*), 'PIPES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.PIPES
   WHERE DELETED IS NULL
 
   UNION ALL
   -- SP - Python, Java, Javascript, SQL
-  SELECT 'sql', 'stored_procedures_' || LOWER(languages.language), COALESCE(COUNT(procedures.PROCEDURE_LANGUAGE), 0), ''
+  SELECT 'sql', 'stored_procedures_' || LOWER(languages.language), COALESCE(COUNT(procedures.PROCEDURE_LANGUAGE), 0), 'PROCEDURES'
   FROM languages
   LEFT JOIN procedures ON UPPER(procedures.procedure_language) = languages.language
   GROUP BY languages.language
 
   UNION ALL
   -- Functions - Python, Java, Javascript, SQL
-  SELECT 'sql', 'functions_' || LOWER(languages.language), COALESCE(COUNT(functions.FUNCTION_LANGUAGE), 0), ''
+  SELECT 'sql', 'functions_' || LOWER(languages.language), COALESCE(COUNT(functions.FUNCTION_LANGUAGE), 0), 'FUNCTIONS'
   FROM languages
   LEFT JOIN functions ON UPPER(functions.function_language) = languages.language
   GROUP BY languages.language
 
   UNION ALL
   -- data types - variant, object, vector, geometry, timestamp_ltz, timestamp_ntz, timestamp_tz
-  SELECT 'data_types', LOWER(data_types.data_type), COALESCE(COUNT(columns.data_type), 0), ''
+  SELECT 'data_types', LOWER(data_types.data_type), COALESCE(COUNT(columns.data_type), 0), 'COLUMNS'
   FROM data_types
   LEFT JOIN columns  ON UPPER(columns.data_type) = data_types.data_type
   GROUP BY data_types.data_type
 
   UNION ALL
   -- data types - timestamp with nanoseconds
-  SELECT 'data_types', 'timestamp_nano', COUNT(*), ''
+  SELECT 'data_types', 'timestamp_nano', COUNT(*), 'COLUMNS'
   FROM columns
   WHERE DATA_TYPE LIKE 'TIMESTAMP%' AND DATETIME_PRECISION > 6
 
   UNION ALL
   -- COPY INTO - count executions in the last 30 days
-  SELECT 'etl', 'copy_into_last_30_days', COUNT(*), ''
+  SELECT 'etl', 'copy_into_last_30_days', COUNT(*), 'QUERIES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD(day, -30, CURRENT_TIMESTAMP())
     AND QUERY_TEXT ILIKE 'COPY INTO %'
 
   UNION ALL
   -- GET DDL - count executions in the last 30 days
-  SELECT 'sql', 'get_ddl_last_30_days', COUNT(*), ''
+  SELECT 'sql', 'get_ddl_last_30_days', COUNT(*), 'QUERIES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD(day, -30, CURRENT_TIMESTAMP())
     AND QUERY_TEXT ILIKE '%GET_DDL(%'
 
   UNION ALL
   -- dynamic pivot clause
-  SELECT 'sql', 'dynamic_pivot_clause_last_30_days', COUNT(*), ''
+  SELECT 'sql', 'dynamic_pivot_clause_last_30_days', COUNT(*), 'QUERIES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD(day, -30, CURRENT_TIMESTAMP())
     AND QUERY_TEXT ILIKE '%PIVOT%'
@@ -177,36 +177,36 @@ WITH
 
   UNION ALL
   -- Horizon - Tags exist (catalog metadata is being used)
-  SELECT 'governance', 'horizon_tags_defined', COUNT(*), ''
+  SELECT 'governance', 'horizon_tags_defined', COUNT(*), 'TAGS'
   FROM SNOWFLAKE.ACCOUNT_USAGE.TAGS
   WHERE DELETED IS NULL
 
   UNION ALL
   -- Horizon - Tag assignments exist
-  SELECT 'governance', 'horizon_tag_assignments', COUNT(*), ''
+  SELECT 'governance', 'horizon_tag_assignments', COUNT(*), 'REFERENCES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES
   WHERE OBJECT_DELETED IS NULL
 
   UNION ALL
   -- Horizon - Sensitive data classification was run
-  SELECT 'governance', 'horizon_sensitive_data_classification_tables', COUNT(*), ''
+  SELECT 'governance', 'horizon_sensitive_data_classification_tables', COUNT(*), 'TABLES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.DATA_CLASSIFICATION_LATEST
 
   UNION ALL
   -- Snowpark container services - compute pools
-  SELECT 'service', 'snowpark_container_services_compute_pools', COUNT(*), ''
+  SELECT 'service', 'snowpark_container_services_compute_pools', COUNT(*), 'POOLS'
   FROM SNOWFLAKE.ACCOUNT_USAGE.COMPUTE_POOLS
   WHERE DELETED IS NULL
 
   UNION ALL
   -- Snowpark container services - services
-  SELECT 'service', 'snowpark_container_services_services', COUNT(*), ''
+  SELECT 'service', 'snowpark_container_services_services', COUNT(*), 'SERVICES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.SERVICES
   WHERE DELETED IS NULL
 
   UNION ALL
   -- BI - Tableau heuristics
-  SELECT 'bi', 'tableau_query_tagged_queries_30d', COUNT(*), ''
+  SELECT 'bi', 'tableau_query_tagged_queries_30d', COUNT(*), 'QUERIES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
     AND QUERY_TAG IS NOT NULL
@@ -218,7 +218,7 @@ WITH
 
   UNION ALL
   -- BI - Sigma heuristics
-  SELECT 'bi', 'sigma_query_tagged_queries_30d', COUNT(*), ''
+  SELECT 'bi', 'sigma_query_tagged_queries_30d', COUNT(*), 'QUERIES'
   FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
   WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
     AND QUERY_TAG IS NOT NULL
@@ -226,7 +226,7 @@ WITH
 
   UNION ALL
   -- ELT - Fivetran
-  SELECT 'elt', 'fivetran_like_metadata_columns', COUNT(*), ''
+  SELECT 'elt', 'fivetran_like_metadata_columns', COUNT(*), 'COLUMNS'
   FROM SNOWFLAKE.ACCOUNT_USAGE.COLUMNS
   WHERE DELETED IS NULL
     AND REGEXP_LIKE(UPPER(COLUMN_NAME), '.*_FIVETRAN_(ID|SYNCED|DELETED).*')

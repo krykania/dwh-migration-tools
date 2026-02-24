@@ -43,12 +43,12 @@ WITH clustering_classified AS (
       AND CLUSTERING_KEY IS NOT NULL
   )
   -- clustering by columns
-  SELECT 'storage_table_layout', 'clustering_by_columns', COUNT(*), ''
+  SELECT 'storage_table_layout', 'clustering_by_columns', COUNT(*), 'CLUSTERING'
   FROM clustering_classified WHERE key_type='BY_COLUMNS'
 
   UNION ALL
   -- clustering by expressions
-  SELECT'storage_table_layout', 'clustering_by_expressions', COUNT(*), ''
+  SELECT 'storage_table_layout', 'clustering_by_expressions', COUNT(*), 'CLUSTERING'
   FROM clustering_classified WHERE key_type='BY_EXPRESSION'
 
   UNION ALL
@@ -62,7 +62,7 @@ WITH clustering_classified AS (
         'is'
       )
     ),
-    ''
+    'CURSORS'
   FROM snowflake.account_usage.procedures
   WHERE deleted IS NULL
     AND procedure_definition IS NOT NULL

@@ -49,7 +49,7 @@ BEGIN
       SUM(IFF(column_name = 'SEARCH_OPTIMIZATION' AND column_value = 'ON', 1, 0)) AS search_optimization_on_count
     FROM flattened_show_tables
   )
-  SELECT 'table', 'search_optimization',  IFF(has_search_optimization_column = 1, search_optimization_on_count, 0), IFF(has_search_optimization_column = 1, '', 'no_column')
+  SELECT 'table', 'search_optimization',  IFF(has_search_optimization_column = 1, search_optimization_on_count, 0), IFF(has_search_optimization_column = 1, 'TABLES', 'no_column')
   FROM aggregated;
 
   show_tables_query_id := LAST_QUERY_ID();
@@ -102,7 +102,7 @@ BEGIN
   -- Contains native apps installed info
   SHOW APPLICATIONS IN ACCOUNT;
 
-  SELECT 'app', 'native_apps_installed', COUNT(*), ''
+  SELECT 'app', 'native_apps_installed', COUNT(*), 'APPLICATIONS'
   FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
 
   show_apps_installed_query_id := LAST_QUERY_ID();
@@ -110,7 +110,7 @@ BEGIN
   -- Contains native apps packages info
   SHOW APPLICATION PACKAGES IN ACCOUNT;
 
-  SELECT 'app', 'native_app_packages', COUNT(*), ''
+  SELECT 'app', 'native_app_packages', COUNT(*), 'PACKAGES'
   FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
 
   show_app_packages_query_id := LAST_QUERY_ID();
